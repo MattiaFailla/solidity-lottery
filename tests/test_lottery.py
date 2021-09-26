@@ -11,5 +11,6 @@ def test_get_entrance_fee():
         price_feed_contract_address,
         {"from": account},
     )
+    # @note: We need to pull this data from an external api
     assert lottery.getEntranceFee() > Web3.toWei(0.014, "ether")
     assert lottery.getEntranceFee() < Web3.toWei(0.1, "ether")
