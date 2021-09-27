@@ -3,8 +3,9 @@
 pragma solidity ^0.6.6;
 
 import "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract Lottery {
+contract Lottery is Ownable {
     address payable[] players;
     uint256 public usdEntryFee;
     AggregatorV3Interface internal ethUsdPriceFeed;
@@ -37,7 +38,7 @@ contract Lottery {
         return costToEnter;
     }
 
-    function startLotter() public {
+    function startLotter() public onlyOwner {
         require(
             lottery_state == LOTTERY_STATE.CLOSED,
             "Can't start a new lottery yet! Lottery still running"
