@@ -9,7 +9,7 @@ import "@chainlink/contracts/src/v0.6/VRFConsumerBase.sol";
 contract Lottery is VRFConsumerBase, Ownable {
     address payable[] players;
     uint256 public usdEntryFee;
-    address public recentWinner;
+    address payable public recentWinner;
     AggregatorV3Interface internal ethUsdPriceFeed;
     enum LOTTERY_STATE {
         OPEN,
@@ -23,7 +23,7 @@ contract Lottery is VRFConsumerBase, Ownable {
     bytes32 keyhash;
 
     // Random number by VFR
-    uint256 public randomResult;
+    uint256 public recentRandomness;
 
     constructor(
         address _pricefeedAddress,
@@ -80,6 +80,11 @@ contract Lottery is VRFConsumerBase, Ownable {
         // Picking a random winner
         uint256 indexOfWinner = (randomness % players.length);
         recentWinner = players[indexOfWinner];
+        recentWinner.transfer(address(this).balance);
+        // Reset the lottery
+        players = new address payable[](0);
+        lottery_state = LOTTERY_STATE.CLOSED;
+        recentRandomness = randomness;
     }
 
     function endLottery() public onlyOwner {
@@ -87,6 +92,6 @@ contract Lottery is VRFConsumerBase, Ownable {
         // To get a random number we need to use an external source of random numbers
         /// Using chainlink VRF
         lottery_state = LOTTERY_STATE.CALCULATING_WINNER;
-        requestRandomnes(keyhash, linkFee); // Will return in requestId using request/receive architecture
+        requestRandomness(keyhash, linkFee); // Will return in requestId using request/receive architecture
     }
 }
