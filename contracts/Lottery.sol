@@ -4,10 +4,12 @@ pragma solidity ^0.6.6;
 
 import "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@chainlink/contracts/src/v0.6/VRFConsumerBase.sol";
 
-contract Lottery is Ownable {
+contract Lottery is VRFConsumerBase, Ownable {
     address payable[] players;
     uint256 public usdEntryFee;
+    address public recentWinner;
     AggregatorV3Interface internal ethUsdPriceFeed;
     enum LOTTERY_STATE {
         OPEN,
@@ -16,10 +18,25 @@ contract Lottery is Ownable {
     }
     LOTTERY_STATE public lottery_state;
 
-    constructor(address _pricefeedAddress) public {
+    // Link settings
+    uint256 public linkFee;
+    bytes32 keyhash;
+
+    // Random number by VFR
+    uint256 public randomResult;
+
+    constructor(
+        address _pricefeedAddress,
+        address _vfrCoordinator,
+        address _linkToken,
+        uint256 _linkFee,
+        bytes32 _keyhash
+    ) public VRFConsumerBase(_vfrCoordinator, _linkToken) {
         usdEntryFee = 50 * (10**18);
         ethUsdPriceFeed = AggregatorV3Interface(_pricefeedAddress);
         lottery_state = LOTTERY_STATE.CLOSED;
+        linkFee = _linkFee;
+        keyhash = _keyhash;
     }
 
     function enter() public payable {
@@ -46,5 +63,30 @@ contract Lottery is Ownable {
         lottery_state = LOTTERY_STATE.OPEN;
     }
 
-    function endLottery() public {}
+    /**
+     * Callback function used by VRF Coordinator
+     * This is internal since we want only the contract itself to call this function
+     */
+    function fulfillRandomness(bytes32 requestId, uint256 randomness)
+        internal
+        override
+    {
+        require(
+            lottery_state == LOTTERY_STATE.CALCULATING_WINNER,
+            "Unable to process random number yet!"
+        );
+        require(randomness > 0, "Random not found");
+
+        // Picking a random winner
+        uint256 indexOfWinner = (randomness % players.length);
+        recentWinner = players[indexOfWinner];
+    }
+
+    function endLottery() public onlyOwner {
+        // Choose a random winner and end the lottery
+        // To get a random number we need to use an external source of random numbers
+        /// Using chainlink VRF
+        lottery_state = LOTTERY_STATE.CALCULATING_WINNER;
+        requestRandomnes(keyhash, linkFee); // Will return in requestId using request/receive architecture
+    }
 }
