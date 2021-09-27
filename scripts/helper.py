@@ -1,11 +1,22 @@
-from brownie import accounts, network, config, MockV3Agregator, Contract
+from brownie import (
+    accounts,
+    network,
+    config,
+    MockV3Aggregator,
+    VFRCoordinatorMock,
+    MockLinkToken,
+    Contract,
+)
 from web3 import Web3
 
 FORKED_LOCAL_ENVIRONMENTS = ["mainnet-fork", "mainnet-fork-dev"]
 LOCAL_BLOCKCHAIN_ENVIRONMENTS = ["development", "ganache-local"]
 
-contract_to_mock = {"eth_usd_price_feed": MockV3Agregator,
-                    "vfr_coordinator": }
+contract_to_mock = {
+    "eth_usd_price_feed": MockV3Aggregator,
+    "vfr_coordinator": VFRCoordinatorMock,
+    "link_token": MockLinkToken,
+}
 
 # MockV3 data
 DECIMALS = 8
