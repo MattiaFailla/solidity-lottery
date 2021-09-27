@@ -13,8 +13,7 @@ def deploy_lottery():
         {"from": account},
         publish_source=config["networks"][network.show_active()].get("verify", False),
     )
-
-    pass
+    print("Lottery contract deployed!")
 
 
 def main():

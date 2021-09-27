@@ -3,7 +3,7 @@ from brownie import (
     network,
     config,
     MockV3Aggregator,
-    VFRCoordinatorMock,
+    VRFCoordinatorMock,
     MockLinkToken,
     Contract,
 )
@@ -14,7 +14,7 @@ LOCAL_BLOCKCHAIN_ENVIRONMENTS = ["development", "ganache-local"]
 
 contract_to_mock = {
     "eth_usd_price_feed": MockV3Aggregator,
-    "vfr_coordinator": VFRCoordinatorMock,
+    "vfr_coordinator": VRFCoordinatorMock,
     "link_token": MockLinkToken,
 }
 
@@ -76,6 +76,20 @@ def deploy_mocks(decimals=DECIMALS, initial_value=STARTING_PRICE):
     """
     Deploying mock contracts
     """
+    print(f"The active network is {network.show_active()}")
+    print("Deploying Mocks...")
     account = get_account()
-    mock_price_feed = MockV3Agregator.deploy(decimals, initial_value, {"from": account})
-    print(f"Deployed mock contract price feed: {mock_price_feed}")
+    print("Deploying Mock Link Token...")
+    link_token = MockLinkToken.deploy({"from": account})
+    print("Deploying Mock Price Feed...")
+    mock_price_feed = MockV3Aggregator.deploy(
+        decimals, initial_value, {"from": account}
+    )
+    print(f"Deployed to {mock_price_feed.address}")
+    print("Deploying Mock VRFCoordinator...")
+    mock_vrf_coordinator = VRFCoordinatorMock.deploy(
+        link_token.address, {"from": account}
+    )
+    print(f"Deployed to {mock_vrf_coordinator.address}")
+
+    print("Mocks Deployed!")
